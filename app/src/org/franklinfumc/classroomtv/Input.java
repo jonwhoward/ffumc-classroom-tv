@@ -1,0 +1,173 @@
+package org.franklinfumc.classroomtv;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.media.AudioManager;
+import android.media.tv.TvContract;
+import android.media.tv.TvInputManager;
+import android.media.tv.TvView;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+/**
+ * Shows an HDMI, AV or other passthrough input inside the launcher, through Android's TvView.
+ *
+ * Handing the passthrough channel URI to the TV's own app is not enough everywhere: on a Fire TV
+ * Edition television that app is Amazon's Live TV, which lands in its channel-scan settings when
+ * no channels are scanned, and Amazon's home opens inputs through a service that needs a system
+ * permission. TvView is the public API for the same thing: it asks the TV input service for a
+ * session and hands it this window's surface. No permission is involved, and the picture goes away
+ * with this screen, so HOME and BACK behave like everywhere else in the launcher.
+ */
+public final class Input extends Activity {
+    private static final int MATCH = ViewGroup.LayoutParams.MATCH_PARENT;
+    private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
+    private static final String EXTRA_ID = "input", EXTRA_NAME = "name";
+    private static final long NAME_MS = 2500, SIGNAL_MS = 6000;
+    private static final String FAILED = "Could not open input", NO_SIGNAL = "No signal";
+
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final AudioManager.OnAudioFocusChangeListener focus = change -> { };
+    private TvView view;
+    private TextView name, status;
+    private String id;
+    private final Runnable hideName = () -> name.animate().alpha(0f).setDuration(250)
+            .withEndAction(() -> name.setVisibility(View.GONE)).start();
+    private final Runnable noSignal = () -> status(NO_SIGNAL);
+
+    private final TvView.TvInputCallback watch = new TvView.TvInputCallback() {
+        @Override
+        public void onConnectionFailed(String inputId) {
+            status(FAILED);
+        }
+
+        @Override
+        public void onDisconnected(String inputId) {
+            status(FAILED);
+        }
+
+        @Override
+        public void onVideoAvailable(String inputId) {
+            status(null);
+        }
+
+        @Override
+        public void onVideoUnavailable(String inputId, int reason) {
+            // Tuning and buffering are on the way to a picture; everything else means none is coming.
+            boolean pending = reason == TvInputManager.VIDEO_UNAVAILABLE_REASON_TUNING
+                    || reason == TvInputManager.VIDEO_UNAVAILABLE_REASON_BUFFERING;
+            if (!pending) status(NO_SIGNAL);
+        }
+    };
+
+    /** The intent that shows input {@code id} on this screen, titled {@code name}. */
+    static Intent intent(Context c, String id, CharSequence name) {
+        return new Intent(c, Input.class).putExtra(EXTRA_ID, id).putExtra(EXTRA_NAME, name);
+    }
+
+    @Override
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        id = getIntent().getStringExtra(EXTRA_ID);
+        // The video is a layer behind this window; a transparent window lets the text over it blend
+        // instead of punching black boxes into the picture.
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        FrameLayout root = new FrameLayout(this);
+        if (getSystemService(Context.TV_INPUT_SERVICE) != null) {
+            view = new TvView(this);
+            view.setCallback(watch);
+            view.setFocusable(true);
+            root.addView(view, new FrameLayout.LayoutParams(MATCH, MATCH));
+        }
+
+        status = Ui.text(this, 22, Ui.MUTED, Ui.MEDIUM);
+        status.setVisibility(View.GONE);
+        root.addView(status, new FrameLayout.LayoutParams(WRAP, WRAP, Gravity.CENTER));
+
+        name = Ui.text(this, 20, Ui.TEXT, Ui.MEDIUM);
+        name.setText(getIntent().getCharSequenceExtra(EXTRA_NAME));
+        name.setPadding(dp(22), dp(10), dp(22), dp(10));
+        name.setBackground(Ui.round(0xB3000000, dp(10)));
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(WRAP, WRAP, Gravity.TOP | Gravity.START);
+        lp.setMargins(dp(56), dp(40), 0, 0);
+        root.addView(name, lp);
+        setContentView(root);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation") // the AudioFocusRequest replacement is Android 8+, Fire OS 6 is 7.1
+    protected void onStart() {
+        super.onStart();
+        showName();
+        if (view == null || id == null) {
+            status(FAILED);
+            return;
+        }
+        ((AudioManager) getSystemService(Context.AUDIO_SERVICE))
+                .requestAudioFocus(focus, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        view.setStreamVolume(1f);
+        view.tune(id, TvContract.buildChannelUriForPassthroughInput(id));
+        view.requestFocus();
+        // Most input services report why there is no picture; this covers one that stays silent.
+        ui.postDelayed(noSignal, SIGNAL_MS);
+    }
+
+    /** Releases the input so the TV stops routing it the moment this screen leaves. */
+    @Override
+    @SuppressWarnings("deprecation")
+    protected void onStop() {
+        ui.removeCallbacksAndMessages(null);
+        if (view != null) {
+            view.reset();
+            ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).abandonAudioFocus(focus);
+        }
+        super.onStop();
+    }
+
+    /** BACK leaves; Menu or Info shows the input's name again. Other keys go to the input. */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.KEYCODE_BACK:
+                if (e.getAction() == KeyEvent.ACTION_UP) finish();
+                return true;
+            case KeyEvent.KEYCODE_MENU:
+            case KeyEvent.KEYCODE_INFO:
+                if (e.getAction() == KeyEvent.ACTION_DOWN) showName();
+                return true;
+            default:
+                return super.dispatchKeyEvent(e);
+        }
+    }
+
+    private void showName() {
+        ui.removeCallbacks(hideName);
+        name.animate().cancel();
+        name.setAlpha(1f);
+        name.setVisibility(View.VISIBLE);
+        ui.postDelayed(hideName, NAME_MS);
+    }
+
+    private void status(String text) {
+        Log.i("ffumc", "input " + id + ": " + (text == null ? "video" : text));
+        ui.removeCallbacks(noSignal);
+        status.setText(text);
+        status.setVisibility(text == null ? View.GONE : View.VISIBLE);
+    }
+
+    private int dp(float v) {
+        return Ui.dp(this, v);
+    }
+}

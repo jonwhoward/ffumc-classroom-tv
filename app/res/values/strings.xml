@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Franklin First TV</string>
+    <string name="guard_label">Franklin First home button</string>
+    <string name="guard_description">Sends the Home button to the Franklin First classroom screen instead of Amazon\'s. It reads no screen content and has no internet access.</string>
+</resources>
