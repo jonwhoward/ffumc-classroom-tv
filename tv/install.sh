@@ -83,11 +83,13 @@ echo "Installing the Franklin First screen..."
 out=$(adb_ install -r "$APK" 2>&1 | grep -m1 -E 'Success|Failure|failed' || true)
 [[ $out == *Success* ]] || { echo "Install failed: $out"; exit 1; }
 
+# Android 11 only lets the app itself create its files folder, so open it once first.
+sh_ am start -W -n $PKG/.Home >/dev/null
+sleep 2
 DIR=/sdcard/Android/data/$PKG/files
 TMP=$(mktemp)
 sed "s/^room=.*/room=$ROOM/" "$CONF" > "$TMP"
-sh_ mkdir -p $DIR
-adb_ push "$TMP" $DIR/classroom.conf >/dev/null
+adb_ push "$TMP" $DIR/classroom.conf >/dev/null || { echo "Could not copy the room settings to the TV."; rm -f "$TMP"; exit 1; }
 rm -f "$TMP"
 
 sh_ dumpsys deviceidle whitelist +$PKG >/dev/null
