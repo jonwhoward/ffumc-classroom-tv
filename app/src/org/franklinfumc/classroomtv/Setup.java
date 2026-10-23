@@ -15,8 +15,9 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * Everything that differs between rooms or changes during the year, read from one text file:
- *   /sdcard/Android/data/org.franklinfumc.classroomtv/files/classroom.conf
+ * Everything that differs between rooms or changes during the year, read from one text file in the
+ * app's private storage. install.sh delivers it inside the intent that opens the home screen
+ * (extra "conf64", base64), because Fire OS 8 lets no other app or adb write into this app's folders.
  *
  *   room=B144
  *   phone=615-794-2734
@@ -73,9 +74,8 @@ final class Setup {
 
     /** Rereads the file when it changed since the last call. Returns true when anything was reloaded. */
     boolean refresh(Context c) {
-        File dir = c.getExternalFilesDir(null);
-        File f = dir == null ? null : new File(dir, FILE);
-        long now = f != null && f.isFile() ? f.lastModified() : 0;
+        File f = new File(c.getFilesDir(), FILE);
+        long now = f.isFile() ? f.lastModified() + f.length() : 0;
         if (now == stamp) return false;
         stamp = now;
         room = "";
@@ -141,6 +141,26 @@ final class Setup {
         } catch (RuntimeException e) {
             Log.w("ffumc", "skipped line: " + line, e);
         }
+    }
+
+    /** Saves a settings file handed over by install.sh. Returns true when it was stored. */
+    static boolean store(Context c, String base64) {
+        try {
+            byte[] data = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+            File tmp = new File(c.getFilesDir(), FILE + ".new");
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
+                out.write(data);
+            }
+            return tmp.renameTo(new File(c.getFilesDir(), FILE));
+        } catch (IOException | IllegalArgumentException e) {
+            Log.w("ffumc", "could not store settings", e);
+            return false;
+        }
+    }
+
+    /** Forgets what was loaded, so the next refresh rereads the file. */
+    void reset() {
+        stamp = -1;
     }
 
     private static int day(String s) {

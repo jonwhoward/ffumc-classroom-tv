@@ -70,6 +70,7 @@ public final class Home extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         u = getResources().getDisplayMetrics().widthPixels / 100f;
+        receive(getIntent());
         setup.refresh(this);
         setContentView(build());
         buildTiles();
@@ -108,7 +109,16 @@ public final class Home extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (receive(intent) && setup.refresh(this)) buildTiles();
         focusFirst();
+    }
+
+    /** Stores a settings file sent by install.sh with the intent that opened this screen. */
+    private boolean receive(Intent intent) {
+        String conf = intent == null ? null : intent.getStringExtra("conf64");
+        if (conf == null || !Setup.store(this, conf)) return false;
+        setup.reset();
+        return true;
     }
 
     @Override

@@ -83,14 +83,11 @@ echo "Installing the Franklin First screen..."
 out=$(adb_ install -r "$APK" 2>&1 | grep -m1 -E 'Success|Failure|failed' || true)
 [[ $out == *Success* ]] || { echo "Install failed: $out"; exit 1; }
 
-# Android 11 only lets the app itself create its files folder, so open it once first.
-sh_ am start -W -n $PKG/.Home >/dev/null
+# Fire OS 8 lets nothing outside the app write into its folders, so the settings travel
+# inside the intent that opens the home screen, and the app saves them itself.
+CONF64=$(sed "s/^room=.*/room=$ROOM/" "$CONF" | base64 | tr -d '\n')
+sh_ am start -W -n $PKG/.Home --es conf64 "$CONF64" >/dev/null || { echo "Could not send the room settings to the TV."; exit 1; }
 sleep 2
-DIR=/sdcard/Android/data/$PKG/files
-TMP=$(mktemp)
-sed "s/^room=.*/room=$ROOM/" "$CONF" > "$TMP"
-adb_ push "$TMP" $DIR/classroom.conf >/dev/null || { echo "Could not copy the room settings to the TV."; rm -f "$TMP"; exit 1; }
-rm -f "$TMP"
 
 sh_ dumpsys deviceidle whitelist +$PKG >/dev/null
 sh_ cmd package set-home-activity $PKG/.Home >/dev/null 2>&1 || true
