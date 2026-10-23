@@ -128,7 +128,7 @@ public final class Home extends Activity {
         focusFirst();
     }
 
-    /** Pressing Menu three times quickly opens Amazon's home, for staff who need TV settings. */
+    /** Pressing Menu three times quickly opens the TV's settings, for staff. Home comes back here. */
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.KEYCODE_MENU && e.getAction() == KeyEvent.ACTION_UP) {
@@ -139,11 +139,26 @@ public final class Home extends Activity {
             }
             if (++menuPresses >= 3) {
                 menuPresses = 0;
-                Guard.amazon(this);
+                openSettings();
             }
             return true;
         }
         return super.dispatchKeyEvent(e);
+    }
+
+    /**
+     * Fire OS answers the generic settings action with a stub that reopens Amazon's home, so the TV
+     * settings entry point comes first (from dumbtv's Home.openSettings).
+     */
+    private void openSettings() {
+        Intent tv = new Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.LEANBACK_SETTINGS");
+        Intent i = tv.resolveActivity(getPackageManager()) != null ? tv
+                : new Intent(android.provider.Settings.ACTION_SETTINGS);
+        try {
+            startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
+        } catch (android.content.ActivityNotFoundException | SecurityException e) {
+            Toast.makeText(this, "Could not open settings", Toast.LENGTH_LONG).show();
+        }
     }
 
     private View build() {

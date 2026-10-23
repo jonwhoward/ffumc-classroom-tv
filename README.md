@@ -9,7 +9,7 @@ the room and the class meeting in it, and one big button per HDMI input.
   the latest release into one folder on the Mac, then run
   `bash install.sh <room> <tv-ip>`, e.g. `bash ~/Downloads/install.sh B138 192.168.10.125`.
 - **Undo:** `bash install.sh --undo <tv-ip>`.
-- **Staff escape:** press the remote's Menu button three times to reach Amazon's home and settings.
+- **Staff escape:** press the remote's Menu button three times to open TV Settings. Home returns to the classroom screen.
 
 The Home-button takeover (`Guard.java`) and input screen (`Input.java`) come from
 [dumbtv](https://github.com/humblemuzzu/dumbtv), MIT licensed — see `LICENSE.dumbtv`.
