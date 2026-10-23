@@ -27,6 +27,9 @@ import java.util.List;
  *   class=B144|Sun|08:30|Voyagers
  *
  * A button's first field is its HDMI port number. When the file is missing, the defaults below apply.
+ * One room can change or drop a button with "button@ROOM=":
+ *   button@B138=2|DVD Player|Plays DVDs (not Blu-ray)|#1F4A7C
+ *   button@A113=2|-                                   (no button for HDMI 2 in A113)
  */
 final class Setup {
     static final String FILE = "classroom.conf";
@@ -62,6 +65,7 @@ final class Setup {
     final List<Button> buttons = new ArrayList<>();
     final List<Meeting> classes = new ArrayList<>();
     private long stamp = -1;
+    private final List<String[]> roomButtons = new ArrayList<>(); // {room, line value}
 
     private static final String[] DEFAULTS = {
         "button=1|iPad or Laptop|Lessons, videos, slides and Zoom|#7A2426",
@@ -84,6 +88,7 @@ final class Setup {
         email = "tech@franklinfumc.org";
         desk = "Media Room";
         buttons.clear();
+        roomButtons.clear();
         classes.clear();
         List<String> lines = new ArrayList<>();
         if (now != 0) {
@@ -108,6 +113,22 @@ final class Setup {
             }
         }
         for (String line : lines) parse(line.trim());
+        for (String[] rb : roomButtons) {
+            if (!rb[0].equalsIgnoreCase(room)) continue;
+            String[] f = rb[1].split("\\|", -1);
+            try {
+                int port = Integer.parseInt(f[0].trim());
+                int at = -1;
+                for (int i = 0; i < buttons.size(); i++) if (buttons.get(i).port == port) at = i;
+                Button b = f.length >= 2 && "-".equals(f[1].trim()) ? null : button(f);
+                if (at >= 0 && b == null) buttons.remove(at);
+                else if (at >= 0) buttons.set(at, b);
+                else if (b != null) buttons.add(b);
+            } catch (RuntimeException e) {
+                Log.w("ffumc", "skipped room button: " + rb[1], e);
+            }
+        }
+        java.util.Collections.sort(buttons, (a, b) -> Integer.compare(a.port, b.port));
         return true;
     }
 
@@ -118,6 +139,10 @@ final class Setup {
         String key = line.substring(0, eq).trim(), value = line.substring(eq + 1).trim();
         String[] f = value.split("\\|", -1);
         try {
+            if (key.startsWith("button@")) {
+                roomButtons.add(new String[] {key.substring(7).trim(), value});
+                return;
+            }
             switch (key) {
                 case "room":
                     room = value;
@@ -129,10 +154,7 @@ final class Setup {
                     desk = value;
                     break;
                 case "button":
-                    if (f.length >= 3) {
-                        int color = f.length >= 4 && !f[3].trim().isEmpty() ? Color.parseColor(f[3].trim()) : 0xFF1F4A7C;
-                        buttons.add(new Button(Integer.parseInt(f[0].trim()), f[1].trim(), f[2].trim(), color));
-                    }
+                    if (f.length >= 3) buttons.add(button(f));
                     break;
                 case "class":
                     if (f.length >= 4) {
@@ -184,6 +206,11 @@ final class Setup {
     /** Forgets what was loaded, so the next refresh rereads the file. */
     void reset() {
         stamp = -1;
+    }
+
+    private static Button button(String[] f) {
+        int color = f.length >= 4 && !f[3].trim().isEmpty() ? Color.parseColor(f[3].trim()) : 0xFF1F4A7C;
+        return new Button(Integer.parseInt(f[0].trim()), f[1].trim(), f.length >= 3 ? f[2].trim() : "", color);
     }
 
     private static int day(String s) {
