@@ -54,7 +54,9 @@ public final class Home extends Activity {
     private final Setup setup = new Setup();
     private final List<View> tiles = new ArrayList<>();
     private float u; // 1% of the screen width
-    private TextView time, date, room, greet, help;
+    private TextView time, date, room, greet, help, wifiName, wifiPass;
+    private LinearLayout wifiCard;
+    private ImageView qr;
     private LinearLayout row;
     private int menuPresses;
     private long firstMenu;
@@ -166,6 +168,37 @@ public final class Home extends Activity {
         logo.setContentDescription("Franklin First United Methodist Church");
         top.addView(logo, new LinearLayout.LayoutParams(px(27), WRAP));
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1f));
+        wifiCard = new LinearLayout(this);
+        wifiCard.setOrientation(LinearLayout.HORIZONTAL);
+        wifiCard.setGravity(Gravity.CENTER_VERTICAL);
+        wifiCard.setPadding(px(1f), px(1f), px(1.6f), px(1f));
+        wifiCard.setBackground(Ui.round(0x1AFFFFFF, u * 1.2f));
+        qr = new ImageView(this);
+        qr.setScaleType(ImageView.ScaleType.FIT_XY);
+        qr.setBackground(Ui.round(WHITE, u * 0.5f));
+        qr.setPadding(px(0.4f), px(0.4f), px(0.4f), px(0.4f));
+        qr.setContentDescription("Scan to join the guest Wi-Fi");
+        wifiCard.addView(qr, new LinearLayout.LayoutParams(px(8.4f), px(8.4f)));
+        LinearLayout wifiText = new LinearLayout(this);
+        wifiText.setOrientation(LinearLayout.VERTICAL);
+        TextView wifiLabel = Ui.px(this, u * 1.15f, SOFT, Ui.MEDIUM);
+        wifiLabel.setText("GUEST WI-FI \u00B7 SCAN OR TYPE");
+        wifiLabel.setLetterSpacing(0.12f);
+        wifiName = Ui.px(this, u * 1.9f, WHITE, Ui.BOLD);
+        wifiPass = Ui.px(this, u * 1.6f, SOFT, Ui.REGULAR);
+        wifiText.addView(wifiLabel, new LinearLayout.LayoutParams(WRAP, WRAP));
+        LinearLayout.LayoutParams wnl = new LinearLayout.LayoutParams(WRAP, WRAP);
+        wnl.topMargin = px(0.8f);
+        wifiText.addView(wifiName, wnl);
+        LinearLayout.LayoutParams wpl = new LinearLayout.LayoutParams(WRAP, WRAP);
+        wpl.topMargin = px(0.6f);
+        wifiText.addView(wifiPass, wpl);
+        LinearLayout.LayoutParams wtl = new LinearLayout.LayoutParams(WRAP, WRAP);
+        wtl.leftMargin = px(1.4f);
+        wifiCard.addView(wifiText, wtl);
+        LinearLayout.LayoutParams wcl = new LinearLayout.LayoutParams(WRAP, WRAP);
+        wcl.rightMargin = px(3f);
+        top.addView(wifiCard, wcl);
         LinearLayout clockBox = new LinearLayout(this);
         clockBox.setOrientation(LinearLayout.VERTICAL);
         clockBox.setGravity(Gravity.END);
@@ -260,6 +293,7 @@ public final class Home extends Activity {
             t.setNextFocusUpId(t.getId());
             t.setNextFocusDownId(t.getId());
         }
+        showWifi();
         String r = setup.room;
         room.setText(r.isEmpty() ? "Franklin First" : "Room " + r);
         tick();
@@ -361,6 +395,19 @@ public final class Home extends Activity {
         } else {
             help.setText(bold("Need help? Email ", setup.email, ""));
         }
+    }
+
+    /** Fills the guest Wi-Fi card from the settings, or hides it when none is set. */
+    private void showWifi() {
+        if (setup.wifiName.isEmpty()) {
+            wifiCard.setVisibility(View.GONE);
+            return;
+        }
+        wifiCard.setVisibility(View.VISIBLE);
+        wifiName.setText(setup.wifiName);
+        wifiPass.setText(setup.wifiPass.isEmpty() ? "No password"
+                : bold("Password ", setup.wifiPass, ""));
+        qr.setImageBitmap(Qr.wifi(setup.wifiName, setup.wifiPass, px(7.6f), 0xFF002A42, WHITE));
     }
 
     private void focusFirst() {

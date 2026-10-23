@@ -13,6 +13,8 @@ BT=$SDK/build-tools/${BUILD_TOOLS:-34.0.0}
 [[ -f $JAR ]] || { echo "error: $JAR missing" >&2; exit 1; }
 [[ -x $BT/aapt2 ]] || { echo "error: $BT missing" >&2; exit 1; }
 JAVAC=${JAVA_HOME:+$JAVA_HOME/bin/}javac
+ZXING=libs/zxing-core.jar   # QR codes; the CI workflow downloads it from Maven Central
+[[ -f $ZXING ]] || { echo "error: $ZXING missing" >&2; exit 1; }
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -26,10 +28,10 @@ mkdir -p "$WORK/gen" "$WORK/classes" build
 
 find src "$WORK/gen" -name '*.java' > "$WORK/sources.txt"
 "$JAVAC" --release 8 -Xlint:all -Xlint:-options -encoding UTF-8 \
-  -classpath "$JAR" -d "$WORK/classes" @"$WORK/sources.txt"
+  -classpath "$JAR:$ZXING" -d "$WORK/classes" @"$WORK/sources.txt"
 
 find "$WORK/classes" -name '*.class' > "$WORK/classes.txt"
-"$BT/d8" --release --min-api 28 --lib "$JAR" --output "$WORK" @"$WORK/classes.txt"
+"$BT/d8" --release --min-api 28 --lib "$JAR" --output "$WORK" @"$WORK/classes.txt" "$ZXING"
 (cd "$WORK" && zip -q -X app.apk classes.dex)
 
 "$BT/zipalign" -f -p 4 "$WORK/app.apk" "$WORK/aligned.apk"

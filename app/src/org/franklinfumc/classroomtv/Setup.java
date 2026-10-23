@@ -21,6 +21,7 @@ import java.util.List;
  *
  *   room=B144
  *   email=tech@franklinfumc.org
+ *   wifi=FFUMC_Guest|Guest123   (guest network shown with a QR code; leave out to hide the card)
  *   desk=Media Room        (where someone waits to help while Sunday classes meet)
  *   button=1|iPad or Laptop|Lessons, videos, slides and Zoom|#7A2426
  *   button=2|DVD Player|Plays DVDs and Blu-ray discs|#1F4A7C
@@ -62,6 +63,7 @@ final class Setup {
     String room = "";
     String email = "tech@franklinfumc.org";
     String desk = "Media Room";
+    String wifiName = "", wifiPass = "";
     final List<Button> buttons = new ArrayList<>();
     final List<Meeting> classes = new ArrayList<>();
     private long stamp = -1;
@@ -87,6 +89,8 @@ final class Setup {
         room = "";
         email = "tech@franklinfumc.org";
         desk = "Media Room";
+        wifiName = "";
+        wifiPass = "";
         buttons.clear();
         roomButtons.clear();
         classes.clear();
@@ -152,6 +156,10 @@ final class Setup {
                     break;
                 case "desk":
                     desk = value;
+                    break;
+                case "wifi":
+                    wifiName = f[0].trim();
+                    wifiPass = f.length >= 2 ? f[1].trim() : "";
                     break;
                 case "button":
                     if (f.length >= 3) buttons.add(button(f));
