@@ -115,12 +115,12 @@ final class Setup {
         for (String line : lines) parse(line.trim());
         for (String[] rb : roomButtons) {
             if (!rb[0].equalsIgnoreCase(room)) continue;
-            String[] f = rb[1].split("\\|", -1);
+            String[] parts = rb[1].split("\\|", -1);
             try {
-                int port = Integer.parseInt(f[0].trim());
+                int port = Integer.parseInt(parts[0].trim());
                 int at = -1;
                 for (int i = 0; i < buttons.size(); i++) if (buttons.get(i).port == port) at = i;
-                Button b = f.length >= 2 && "-".equals(f[1].trim()) ? null : button(f);
+                Button b = parts.length >= 2 && "-".equals(parts[1].trim()) ? null : button(parts);
                 if (at >= 0 && b == null) buttons.remove(at);
                 else if (at >= 0) buttons.set(at, b);
                 else if (b != null) buttons.add(b);
