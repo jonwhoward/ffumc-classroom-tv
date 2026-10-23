@@ -152,6 +152,7 @@ public final class Home extends Activity {
         LinearLayout screen = new LinearLayout(this);
         screen.setOrientation(LinearLayout.VERTICAL);
         screen.setClipChildren(false);
+        screen.setClipToPadding(false); // the focused button grows 4.5% and must not be trimmed
         screen.setPadding(px(4.2f), px(3.4f), px(4.2f), px(2.6f));
         root.addView(screen, new FrameLayout.LayoutParams(MATCH, MATCH));
 
@@ -199,6 +200,8 @@ public final class Home extends Activity {
         row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setClipChildren(false);
+        row.setClipToPadding(false);
+        row.setPadding(px(1.2f), px(1f), px(1.2f), px(1f)); // room for the focused button to grow
         LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(MATCH, WRAP);
         rlp.topMargin = px(2.6f);
         middle.addView(row, rlp);
