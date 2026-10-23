@@ -3,7 +3,7 @@
 A home screen for the Sunday school Fire TVs (Toshiba C350, Fire OS 8): the church logo, a clock,
 the room and the class meeting in it, and one big button per HDMI input.
 
-- **Settings:** `tv/classroom.conf` — buttons, help phone number and the Sunday class schedule.
+- **Settings:** `tv/classroom.conf` — buttons, help email address and the Sunday class schedule.
   Edit it here; every new build includes it.
 - **Install on a TV:** download `ffumc-classroom-tv.apk`, `install.sh` and `classroom.conf` from
   the latest release into one folder on the Mac, then run

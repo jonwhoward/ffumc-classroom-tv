@@ -20,7 +20,7 @@ import java.util.List;
  * (extra "conf64", base64), because Fire OS 8 lets no other app or adb write into this app's folders.
  *
  *   room=B144
- *   phone=615-794-2734
+ *   email=tech@franklinfumc.org
  *   button=1|iPad or Laptop|Lessons, videos, slides and Zoom|#7A2426
  *   button=2|DVD Player|Plays DVDs and Blu-ray discs|#1F4A7C
  *   class=B144|Sun|08:30|Voyagers
@@ -56,7 +56,7 @@ final class Setup {
     }
 
     String room = "";
-    String phone = "615-794-2734";
+    String email = "tech@franklinfumc.org";
     final List<Button> buttons = new ArrayList<>();
     final List<Meeting> classes = new ArrayList<>();
     private long stamp = -1;
@@ -79,7 +79,7 @@ final class Setup {
         if (now == stamp) return false;
         stamp = now;
         room = "";
-        phone = "615-794-2734";
+        email = "tech@franklinfumc.org";
         buttons.clear();
         classes.clear();
         List<String> lines = new ArrayList<>();
@@ -119,8 +119,8 @@ final class Setup {
                 case "room":
                     room = value;
                     break;
-                case "phone":
-                    phone = value;
+                case "email":
+                    email = value;
                     break;
                 case "button":
                     if (f.length >= 3) {

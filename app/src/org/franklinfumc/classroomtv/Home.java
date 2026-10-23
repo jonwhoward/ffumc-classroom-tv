@@ -260,7 +260,7 @@ public final class Home extends Activity {
         }
         String r = setup.room;
         room.setText(r.isEmpty() ? "Franklin First" : "Room " + r);
-        help.setText(bold("Need help? Church office ", setup.phone, ""));
+        help.setText(bold("Need help? Email ", setup.email, ""));
         tick();
     }
 
