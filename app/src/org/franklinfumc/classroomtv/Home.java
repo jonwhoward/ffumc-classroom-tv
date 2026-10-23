@@ -355,9 +355,9 @@ public final class Home extends Activity {
         String cls = setup.classNow(now);
         greet.setText(cls == null ? part + "." : part + ", " + cls + "!");
         if (setup.deskOpen(now)) {
-            SpannableStringBuilder h = new SpannableStringBuilder(bold("Need help? Ask in the ", setup.desk, "."));
-            h.append("\n").append(bold("Or email ", setup.email, ""));
-            help.setText(h);
+            SpannableStringBuilder line = new SpannableStringBuilder(bold("Need help? Ask in the ", setup.desk, "."));
+            line.append("\n").append(bold("Or email ", setup.email, ""));
+            help.setText(line);
         } else {
             help.setText(bold("Need help? Email ", setup.email, ""));
         }
