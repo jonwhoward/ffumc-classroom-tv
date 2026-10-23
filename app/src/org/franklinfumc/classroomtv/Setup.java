@@ -70,7 +70,7 @@ final class Setup {
     private final List<String[]> roomButtons = new ArrayList<>(); // {room, line value}
 
     private static final String[] DEFAULTS = {
-        "button=1|iPad or Laptop|Lessons, videos, slides and Zoom|#7A2426",
+        "button=1|iPad or Laptop|Phones work too, with an adapter from the Media Room|#7A2426",
         "button=2|DVD Player|Plays DVDs and Blu-ray discs|#1F4A7C",
         "class=B144|Sun|08:30|Voyagers",
         "class=B144|Sun|10:00|Women in Christ",
