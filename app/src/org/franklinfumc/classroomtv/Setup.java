@@ -21,6 +21,7 @@ import java.util.List;
  *
  *   room=B144
  *   email=tech@franklinfumc.org
+ *   desk=Media Room        (where someone waits to help while Sunday classes meet)
  *   button=1|iPad or Laptop|Lessons, videos, slides and Zoom|#7A2426
  *   button=2|DVD Player|Plays DVDs and Blu-ray discs|#1F4A7C
  *   class=B144|Sun|08:30|Voyagers
@@ -57,6 +58,7 @@ final class Setup {
 
     String room = "";
     String email = "tech@franklinfumc.org";
+    String desk = "Media Room";
     final List<Button> buttons = new ArrayList<>();
     final List<Meeting> classes = new ArrayList<>();
     private long stamp = -1;
@@ -80,6 +82,7 @@ final class Setup {
         stamp = now;
         room = "";
         email = "tech@franklinfumc.org";
+        desk = "Media Room";
         buttons.clear();
         classes.clear();
         List<String> lines = new ArrayList<>();
@@ -122,6 +125,9 @@ final class Setup {
                 case "email":
                     email = value;
                     break;
+                case "desk":
+                    desk = value;
+                    break;
                 case "button":
                     if (f.length >= 3) {
                         int color = f.length >= 4 && !f[3].trim().isEmpty() ? Color.parseColor(f[3].trim()) : 0xFF1F4A7C;
@@ -141,6 +147,23 @@ final class Setup {
         } catch (RuntimeException e) {
             Log.w("ffumc", "skipped line: " + line, e);
         }
+    }
+
+    /**
+     * True while someone is at the help desk: on a day with classes, from an hour before the first
+     * one starts until two hours after the last one starts, anywhere in the building.
+     */
+    boolean deskOpen(Calendar now) {
+        if (desk.isEmpty()) return false;
+        int day = now.get(Calendar.DAY_OF_WEEK);
+        int mins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        int first = Integer.MAX_VALUE, last = Integer.MIN_VALUE;
+        for (Meeting k : classes) {
+            if (k.day != day) continue;
+            first = Math.min(first, k.start);
+            last = Math.max(last, k.start);
+        }
+        return first != Integer.MAX_VALUE && mins >= first - 60 && mins < last + 120;
     }
 
     /** Saves a settings file handed over by install.sh. Returns true when it was stored. */

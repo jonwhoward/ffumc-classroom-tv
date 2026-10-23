@@ -222,6 +222,8 @@ public final class Home extends Activity {
         hlp.leftMargin = px(1f);
         bottom.addView(hint, hlp);
         help = Ui.px(this, u * 1.6f, SOFT, Ui.REGULAR);
+        help.setGravity(Gravity.END);
+        help.setLineSpacing(u * 0.4f, 1f);
         bottom.addView(help, new LinearLayout.LayoutParams(WRAP, WRAP));
         screen.addView(bottom, new LinearLayout.LayoutParams(MATCH, WRAP));
         return root;
@@ -260,7 +262,6 @@ public final class Home extends Activity {
         }
         String r = setup.room;
         room.setText(r.isEmpty() ? "Franklin First" : "Room " + r);
-        help.setText(bold("Need help? Email ", setup.email, ""));
         tick();
     }
 
@@ -353,6 +354,13 @@ public final class Home extends Activity {
         String part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
         String cls = setup.classNow(now);
         greet.setText(cls == null ? part + "." : part + ", " + cls + "!");
+        if (setup.deskOpen(now)) {
+            SpannableStringBuilder h = new SpannableStringBuilder(bold("Need help? Ask in the ", setup.desk, "."));
+            h.append("\n").append(bold("Or email ", setup.email, ""));
+            help.setText(h);
+        } else {
+            help.setText(bold("Need help? Email ", setup.email, ""));
+        }
     }
 
     private void focusFirst() {
