@@ -33,7 +33,7 @@ import android.widget.TextView;
 public final class Input extends Activity {
     private static final int MATCH = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
-    private static final String EXTRA_ID = "input", EXTRA_NAME = "name";
+    private static final String EXTRA_ID = "input", EXTRA_NAME = "name", EXTRA_ZOOM = "zoom";
     private static final long NAME_MS = 2500, SIGNAL_MS = 6000;
     private static final String FAILED = "Could not open input", NO_SIGNAL = "No signal";
 
@@ -72,8 +72,9 @@ public final class Input extends Activity {
     };
 
     /** The intent that shows input {@code id} on this screen, titled {@code name}. */
-    static Intent intent(Context c, String id, CharSequence name) {
-        return new Intent(c, Input.class).putExtra(EXTRA_ID, id).putExtra(EXTRA_NAME, name);
+    static Intent intent(Context c, String id, CharSequence name, float zoom) {
+        return new Intent(c, Input.class).putExtra(EXTRA_ID, id).putExtra(EXTRA_NAME, name)
+                .putExtra(EXTRA_ZOOM, zoom);
     }
 
     @Override
@@ -90,7 +91,17 @@ public final class Input extends Activity {
             view = new TvView(this);
             view.setCallback(watch);
             view.setFocusable(true);
-            root.addView(view, new FrameLayout.LayoutParams(MATCH, MATCH));
+            // Zoom: make the picture's surface larger than the screen, centred, so the edges
+            // (an iPad's black bars) fall outside it. 1 = as the input sends it.
+            float zoom = getIntent().getFloatExtra(EXTRA_ZOOM, 1f);
+            if (zoom > 1.001f) {
+                android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+                int w = Math.max(dm.widthPixels, dm.heightPixels), h = Math.min(dm.widthPixels, dm.heightPixels);
+                root.setClipChildren(true);
+                root.addView(view, new FrameLayout.LayoutParams(Math.round(w * zoom), Math.round(h * zoom), Gravity.CENTER));
+            } else {
+                root.addView(view, new FrameLayout.LayoutParams(MATCH, MATCH));
+            }
         }
 
         status = Ui.text(this, 22, Ui.MUTED, Ui.MEDIUM);

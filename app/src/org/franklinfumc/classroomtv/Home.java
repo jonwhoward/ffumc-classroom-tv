@@ -480,7 +480,7 @@ public final class Home extends Activity {
             Toast.makeText(this, "This TV has no HDMI " + b.port, Toast.LENGTH_LONG).show();
             return;
         }
-        startActivity(Input.intent(this, in.getId(), b.name));
+        startActivity(Input.intent(this, in.getId(), b.name, b.zoom));
     }
 
     private List<TvInputInfo> hdmiInputs() {

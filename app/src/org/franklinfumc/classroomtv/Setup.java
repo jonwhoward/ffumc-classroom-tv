@@ -29,9 +29,10 @@ import java.util.List;
  *   class=B144|Sun|08:30|Voyagers
  *
  * A button's first field is its HDMI port number. When the file is missing, the defaults below apply.
- * One room can change or drop a button with "button@ROOM=":
- *   button@B138=2|DVD Player|Plays DVDs (not Blu-ray)|#1F4A7C
- *   button@A113=2|-                                   (no button for HDMI 2 in A113)
+ * A room can list its own buttons with "button@ROOM="; they replace the default buttons there.
+ * Two buttons may share a port, e.g. one zoomed for iPads (fifth field) and one normal for laptops:
+ *   button@B135=1|iPad|Zoomed to fill the screen|#7A2426|1.33
+ *   button@B135=1|Laptop|Normal size|#1F4A7C
  */
 final class Setup {
     static final String FILE = "classroom.conf";
@@ -40,12 +41,14 @@ final class Setup {
         final int port;
         final String name, what;
         final int color;
+        final float zoom; // 1 = as the input sends it; above 1 enlarges the picture (crops the edges)
 
-        Button(int port, String name, String what, int color) {
+        Button(int port, String name, String what, int color, float zoom) {
             this.port = port;
             this.name = name;
             this.what = what;
             this.color = color;
+            this.zoom = zoom;
         }
     }
 
@@ -133,22 +136,20 @@ final class Setup {
             }
         }
         for (String line : lines) parse(line.trim());
+        // A room that lists its own buttons ("button@ROOM=") uses exactly those, in that order.
+        List<Button> mine = new ArrayList<>();
         for (String[] rb : roomButtons) {
             if (!rb[0].equalsIgnoreCase(room)) continue;
-            String[] parts = rb[1].split("\\|", -1);
             try {
-                int port = Integer.parseInt(parts[0].trim());
-                int at = -1;
-                for (int i = 0; i < buttons.size(); i++) if (buttons.get(i).port == port) at = i;
-                Button b = parts.length >= 2 && "-".equals(parts[1].trim()) ? null : button(parts);
-                if (at >= 0 && b == null) buttons.remove(at);
-                else if (at >= 0) buttons.set(at, b);
-                else if (b != null) buttons.add(b);
+                mine.add(button(rb[1].split("\\|", -1)));
             } catch (RuntimeException e) {
                 Log.w("ffumc", "skipped room button: " + rb[1], e);
             }
         }
-        java.util.Collections.sort(buttons, (a, b) -> Integer.compare(a.port, b.port));
+        if (!mine.isEmpty()) {
+            buttons.clear();
+            buttons.addAll(mine);
+        }
         return true;
     }
 
@@ -284,9 +285,15 @@ final class Setup {
         stamp = -1;
     }
 
+    /** port|label|small line|color|zoom  (color and zoom optional; zoom like "1.33" or "zoom=1.33") */
     private static Button button(String[] f) {
         int color = f.length >= 4 && !f[3].trim().isEmpty() ? Color.parseColor(f[3].trim()) : 0xFF1F4A7C;
-        return new Button(Integer.parseInt(f[0].trim()), f[1].trim(), f.length >= 3 ? f[2].trim() : "", color);
+        float zoom = 1f;
+        if (f.length >= 5 && !f[4].trim().isEmpty()) {
+            zoom = Float.parseFloat(f[4].trim().replace("zoom=", "").replace("x", ""));
+            zoom = Math.max(1f, Math.min(2f, zoom));
+        }
+        return new Button(Integer.parseInt(f[0].trim()), f[1].trim(), f.length >= 3 ? f[2].trim() : "", color, zoom);
     }
 
     private static int day(String s) {
