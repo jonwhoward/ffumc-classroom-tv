@@ -81,6 +81,7 @@ final class Setup {
         "class=A113|Sun|10:00|Thirty-Somethings",
         "class=A114|Sun|10:00|Koinonia",
         "class=A115|Sun|10:00|New Horizons",
+        "class=B138|Sun|10:00|Still Waters",
     };
 
     /** Rereads the file when it changed since the last call. Returns true when anything was reloaded. */

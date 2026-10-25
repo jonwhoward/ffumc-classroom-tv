@@ -55,6 +55,7 @@ public final class Home extends Activity {
     private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
     private static final long ESCAPE_MS = 2500;
     private static final long WEATHER_MS = 30 * 60 * 1000L;
+    private static final long WEATHER_RETRY_MS = 2 * 60 * 1000L;
 
     private final Setup setup = new Setup();
     private final List<View> tiles = new ArrayList<>();
@@ -532,6 +533,9 @@ public final class Home extends Activity {
         if (isFinishing() || temp == null) return;
         place.setText(setup.place);
         if (w == null) {
+            // Try again in two minutes instead of waiting for the next half-hour check.
+            ui.removeCallbacks(weatherLoop);
+            if (resumed) ui.postDelayed(weatherLoop, WEATHER_RETRY_MS);
             if (temp.getText().toString().startsWith("--")) {
                 cond.setText("Weather unavailable");
                 hilo.setText("");
