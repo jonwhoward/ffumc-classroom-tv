@@ -242,12 +242,32 @@ final class Setup {
         return -1;
     }
 
+    /**
+     * True when a class booked in {@code classRoom} meets where this TV is. A room with two TVs is
+     * installed as "B136-Left" and "B136-Right"; both share B136's classes.
+     */
+    boolean inRoom(String classRoom) {
+        return room.equalsIgnoreCase(classRoom)
+                || room.toUpperCase(java.util.Locale.US).startsWith(classRoom.toUpperCase(java.util.Locale.US) + "-");
+    }
+
+    /** "B136-Left" shows as "Room B136 · Left TV"; a plain room shows as "Room B138". */
+    String roomLabel() {
+        if (room.isEmpty()) return "Franklin First";
+        int dash = room.lastIndexOf('-');
+        String tail = dash > 0 ? room.substring(dash + 1) : "";
+        if (!tail.isEmpty() && tail.matches("[A-Za-z]+")) {
+            return "Room " + room.substring(0, dash) + " \u00B7 " + tail + " TV";
+        }
+        return "Room " + room;
+    }
+
     /** {start, end} in minutes for this room's screen-on hours on a weekday, or null. */
     private int[] roomSpan(int day) {
         if (room.isEmpty()) return null;
         int first = Integer.MAX_VALUE, last = Integer.MIN_VALUE;
         for (Meeting k : classes) {
-            if (k.day != day || !k.room.equalsIgnoreCase(room)) continue;
+            if (k.day != day || !inRoom(k.room)) continue;
             first = Math.min(first, k.start);
             last = Math.max(last, k.start);
         }
@@ -321,7 +341,7 @@ final class Setup {
         for (Meeting k : classes) {
             if (k.day != day) continue;
             firstSlot = Math.min(firstSlot, k.start);
-            if (k.room.equalsIgnoreCase(room)) here.add(k);
+            if (inRoom(k.room)) here.add(k);
         }
         java.util.Collections.sort(here, (a, b) -> Integer.compare(a.start, b.start));
         for (int i = 0; i < here.size(); i++) {

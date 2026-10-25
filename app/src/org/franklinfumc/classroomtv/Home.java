@@ -424,7 +424,7 @@ public final class Home extends Activity {
             t.setNextFocusDownId(t.getId());
         }
         String r = setup.room;
-        room.setText(r.isEmpty() ? "Franklin First" : "Room " + r);
+        room.setText(setup.roomLabel());
         showWifi();
         tick();
     }
