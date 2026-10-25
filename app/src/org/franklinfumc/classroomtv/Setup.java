@@ -76,12 +76,21 @@ final class Setup {
         "button=1|iPad or Laptop|Phones work too, with an adapter from the Media Room|#7A2426",
         "button=2|DVD Player|Plays DVDs and Blu-ray discs|#1F4A7C",
         "class=B144|Sun|08:30|Voyagers",
-        "class=B144|Sun|10:00|Women in Christ",
+        "class=B136|Sun|08:30|Good News",
+        "class=B135|Sun|08:30|Weekly Readers",
+        "class=A213|Sun|08:30|Parents of Young Children",
         "class=B132-133|Sun|10:00|Common Ground",
+        "class=B138|Sun|10:00|Still Waters",
+        "class=B134|Sun|10:00|McSwiney",
+        "class=B136|Sun|10:00|Seekers",
         "class=A113|Sun|10:00|Thirty-Somethings",
         "class=A114|Sun|10:00|Koinonia",
         "class=A115|Sun|10:00|New Horizons",
-        "class=B138|Sun|10:00|Still Waters",
+        "class=A214|Sun|10:00|Kindred Spirits",
+        "class=B135|Sun|10:00|Amanda Young",
+        "class=B144|Sun|10:00|Women in Christ",
+        "class=A139|Sun|10:00|Garfield's Friends",
+        "class=A113|Sun|11:15|Connections",
     };
 
     /** Rereads the file when it changed since the last call. Returns true when anything was reloaded. */
