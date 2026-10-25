@@ -206,23 +206,30 @@ final class Setup {
      * True while someone is at the help desk: on a day with classes, from an hour before the first
      * one starts until two hours after the last one starts, anywhere in the building.
      */
+    /** The help desk is staffed building-wide: an hour before the first class until two hours after the last starts. */
     boolean deskOpen(Calendar now) {
-        return !desk.isEmpty() && classHours(now);
-    }
-
-    /** True on a day with classes, from an hour before the first starts until two hours after the last starts. */
-    boolean classHours(Calendar now) {
+        if (desk.isEmpty()) return false;
         int[] span = span(now.get(Calendar.DAY_OF_WEEK));
         int mins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
         return span != null && mins >= span[0] && mins < span[1];
     }
 
-    /** When the next class hours begin (epoch millis), or -1 when there are no classes at all. */
+    /**
+     * True while this room's screen should stay on: from an hour before the room's first class of
+     * the day until 15 minutes after its last class ends (classes are taken to last an hour).
+     */
+    boolean classHours(Calendar now) {
+        int[] span = roomSpan(now.get(Calendar.DAY_OF_WEEK));
+        int mins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        return span != null && mins >= span[0] && mins < span[1];
+    }
+
+    /** When this room's next class hours begin (epoch millis), or -1 when it has no classes. */
     long nextClassHours(Calendar now) {
         for (int d = 0; d <= 7; d++) {
             Calendar c = (Calendar) now.clone();
             c.add(Calendar.DAY_OF_YEAR, d);
-            int[] span = span(c.get(Calendar.DAY_OF_WEEK));
+            int[] span = roomSpan(c.get(Calendar.DAY_OF_WEEK));
             if (span == null) continue;
             c.set(Calendar.HOUR_OF_DAY, 0);
             c.set(Calendar.MINUTE, 0);
@@ -232,6 +239,18 @@ final class Setup {
             if (c.after(now)) return c.getTimeInMillis();
         }
         return -1;
+    }
+
+    /** {start, end} in minutes for this room's screen-on hours on a weekday, or null. */
+    private int[] roomSpan(int day) {
+        if (room.isEmpty()) return null;
+        int first = Integer.MAX_VALUE, last = Integer.MIN_VALUE;
+        for (Meeting k : classes) {
+            if (k.day != day || !k.room.equalsIgnoreCase(room)) continue;
+            first = Math.min(first, k.start);
+            last = Math.max(last, k.start);
+        }
+        return first == Integer.MAX_VALUE ? null : new int[] {first - 60, last + 75};
     }
 
     /** {start, end} in minutes after midnight for a weekday's class hours, or null. */
