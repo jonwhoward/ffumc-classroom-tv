@@ -1,0 +1,445 @@
+<title>FFUMC Classroom TV</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lexend:wght@600;700;800&family=Poppins:wght@600;700;800&family=Nunito:wght@700;800;900&family=Montserrat:wght@600;700;800&family=Outfit:wght@600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+/* Layout: one 16:9 TV screen sized in container units. Left column = room, greeting, two buttons.
+   Right column = weather + Wi-Fi glass cards. Frosted glass panels over soft brand-colour light. */
+:root {
+  --base: #04192B;          /* screen ground, set per theme */
+  --orb1: #18375D;          /* Main Blue */
+  --orb2: #7A2426;          /* Darker Accent Red */
+  --orb3: #1B5236;          /* Darker Accent Green */
+  --tint1: 122, 36, 38;     /* button 1 tint (rgb) */
+  --tint2: 24, 55, 93;      /* button 2 tint (rgb) */
+  --ink: #FFFFFF;
+  --ink-soft: rgba(255,255,255,.78);
+  --glass: rgba(255,255,255,.10);
+  --glass-edge: rgba(255,255,255,.24);
+  --font: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --dw: 700; /* headline weight */
+  --display: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif; /* bold headline face */
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #0a1118;
+  color: var(--ink);
+  font-family: var(--font);
+  display: grid;
+  place-items: center;
+  padding-block: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+}
+.wrap { width: 100%; max-width: 1600px; display: grid; gap: 14px; }
+
+.stage {
+  container-type: inline-size;
+  width: 100%; max-width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative; overflow: hidden;
+  border-radius: 10px;
+  background: var(--base);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 30px 80px rgba(0,0,0,.5);
+  transition: background .4s ease;
+}
+/* soft light behind the glass */
+.photo {
+  position: absolute; inset: -3cqw; background: center / cover no-repeat;
+  filter: blur(var(--pblur, 1.2cqw)) brightness(var(--pdim, .5)) saturate(1.1);
+  opacity: 0; transition: opacity .4s ease, filter .3s ease;
+}
+.stage.with-photo .photo { opacity: 1; }
+.stage.with-photo .orb { opacity: .38; mix-blend-mode: color; }
+.orb { position: absolute; border-radius: 50%; filter: blur(7cqw); opacity: .9; transition: background .4s ease; }
+.orb.a { width: 55cqw; height: 55cqw; left: -12cqw; top: -18cqw; background: var(--orb1); }
+.orb.b { width: 46cqw; height: 46cqw; right: -10cqw; top: 6cqw; background: var(--orb2); opacity: .75; }
+.orb.c { width: 50cqw; height: 50cqw; left: 26cqw; bottom: -30cqw; background: var(--orb3); opacity: .7; }
+
+.screen {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 33cqw;
+  grid-template-rows: auto 1fr auto;
+  column-gap: 3cqw; row-gap: 1.6cqw;
+  padding: 2.8cqw 4cqw 2cqw;
+}
+
+.glass {
+  background: linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+  border: 1px solid var(--glass-edge);
+  border-radius: 1.8cqw;
+  backdrop-filter: blur(2.4cqw) saturate(150%);
+  -webkit-backdrop-filter: blur(2.4cqw) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1.2cqw 3cqw rgba(0,0,0,.25);
+}
+
+/* top row */
+.logo { grid-column: 1; width: 25cqw; height: auto; display: block; align-self: start; }
+.clock { grid-column: 2; justify-self: end; text-align: right; line-height: 1; }
+.time { font-family: var(--display); font-size: 5.6cqw; font-weight: var(--dw); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.ampm { font-size: 2.6cqw; font-weight: 600; margin-left: .5cqw; letter-spacing: 0; }
+.date { font-size: 1.8cqw; color: var(--ink-soft); margin-top: .6cqw; font-weight: 500; }
+
+/* left column */
+.left { grid-column: 1; grid-row: 2; display: grid; grid-template-rows: auto 1fr; gap: 2.4cqw; min-width: 0; min-height: 0; }
+.room { font-size: 1.8cqw; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.greet { font-family: var(--display); font-size: 5cqw; font-weight: var(--dw); line-height: 1.04; letter-spacing: -.025em; margin: .8cqw 0 0; text-wrap: balance; }
+.sub { font-size: 2.2cqw; color: var(--ink-soft); margin: 1cqw 0 0; font-weight: 500; }
+
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 2cqw; min-height: 0; }
+.tile {
+  appearance: none; cursor: pointer; text-align: left;
+  font-family: var(--font); color: var(--ink);
+  border-radius: 1.8cqw; padding: 1.6cqw 2cqw;
+  min-height: 11cqw;
+  display: grid; grid-template-rows: auto 1fr auto auto; gap: .5cqw;
+  border: 1px solid rgba(255,255,255,.26);
+  background: linear-gradient(160deg, rgba(var(--t), .78), rgba(var(--t), .52));
+  backdrop-filter: blur(2.4cqw) saturate(150%);
+  -webkit-backdrop-filter: blur(2.4cqw) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 1.2cqw 3cqw rgba(0,0,0,.28);
+  outline: none; position: relative;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.tile.t1 { --t: var(--tint1); }
+.tile.t2 { --t: var(--tint2); }
+.tile .port {
+  justify-self: start; font-size: 1.25cqw; font-weight: 700; letter-spacing: .12em;
+  background: rgba(0,0,0,.25); padding: .4cqw .9cqw; border-radius: 99px;
+}
+.tile .name { font-family: var(--display); font-size: 3.1cqw; font-weight: var(--dw); line-height: 1; letter-spacing: -.01em; }
+.tile .what { font-size: 1.55cqw; color: rgba(255,255,255,.9); font-weight: 500; line-height: 1.25; }
+.tile.is-focus {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 .5cqw #fff, inset 0 1px 0 rgba(255,255,255,.3), 0 1.6cqw 3.6cqw rgba(0,0,0,.35);
+}
+
+/* right column */
+.right { grid-column: 2; grid-row: 2; display: grid; grid-template-rows: 1fr auto; gap: 1.4cqw; min-width: 0; min-height: 0; }
+.label { font-size: 1.15cqw; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
+
+.weather { padding: 1.4cqw 1.8cqw; display: grid; grid-template-rows: auto 1fr; gap: .6cqw; }
+.now { display: flex; align-items: center; gap: 2cqw; }
+.now svg { width: 8cqw; height: 8cqw; flex: none; }
+.temp { font-family: var(--display); font-size: 6.4cqw; font-weight: var(--dw); line-height: .9; letter-spacing: -.03em; }
+.cond { font-size: 2cqw; font-weight: 600; margin-top: .3cqw; }
+.hilo { font-size: 1.7cqw; color: var(--ink-soft); margin-top: .4cqw; font-variant-numeric: tabular-nums; }
+.days { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,.16); padding-top: .7cqw; }
+.day { text-align: center; display: grid; grid-template-columns: auto auto; align-items: center; justify-content: center; column-gap: .5cqw; row-gap: .2cqw; }
+.day b { grid-column: 1 / -1; }
+.day b { font-size: 1.3cqw; font-weight: 600; color: var(--ink-soft); }
+.day svg { width: 2.2cqw; height: 2.2cqw; }
+.day span { font-size: 1.4cqw; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.wifi { padding: 1.1cqw 1.4cqw; display: flex; align-items: center; gap: 1.6cqw; }
+.qr { width: 8cqw; height: 8cqw; background: #fff; border-radius: .8cqw; padding: .5cqw; flex: none; box-sizing: border-box; display: grid; place-items: center; }
+.qr img, .qr svg { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.wifi .ssid { font-family: var(--display); font-size: 2cqw; font-weight: var(--dw); margin-top: .6cqw; }
+.wifi .pass { font-size: 1.6cqw; color: var(--ink-soft); margin-top: .4cqw; }
+.wifi .pass b { color: #fff; font-weight: 700; }
+
+/* footer */
+.bottom {
+  grid-column: 1 / -1; grid-row: 3;
+  display: flex; justify-content: space-between; align-items: center; gap: 2cqw;
+  font-size: 1.55cqw; color: var(--ink-soft); font-weight: 500;
+  border-top: 1px solid rgba(255,255,255,.14); padding-top: 1.1cqw;
+}
+.bottom b { color: #fff; font-weight: 700; }
+.remote { display: inline-flex; align-items: center; gap: 1cqw; }
+.dpad { width: 2.4cqw; height: 2.4cqw; border-radius: 50%; border: .28cqw solid var(--ink-soft); display: grid; place-items: center; flex: none; }
+.dpad::after { content: ""; width: .8cqw; height: .8cqw; border-radius: 50%; background: #fff; }
+.help { text-align: right; line-height: 1.35; }
+
+.switching { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(4,25,43,.9); font-size: 3.4cqw; font-weight: 700; }
+.switching[hidden] { display: none; }
+.switching small { display: block; font-size: 1.7cqw; font-weight: 500; color: var(--ink-soft); margin-top: 1cqw; }
+
+/* preview controls (not on the TV) */
+.preview { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; font-size: 14px; color: #d6e0e7; }
+.preview label { display: inline-flex; align-items: center; gap: 8px; }
+.preview select { font: inherit; color: #fff; background: #13212c; border: 1px solid #2c4252; border-radius: 6px; padding: 6px 10px; }
+.preview select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.caption { font-size: 13px; color: #9fb0bd; text-align: center; line-height: 1.5; margin: 0; }
+@media (prefers-reduced-motion: reduce) { .tile, .stage, .orb { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="stage" id="stage">
+    <div class="photo"></div>
+    <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+    <div class="screen">
+      <img class="logo" alt="Franklin First United Methodist Church" src="__LOGO__">
+      <div class="clock">
+        <div class="time" id="time">9:30<span class="ampm">AM</span></div>
+        <div class="date" id="date">Sunday, October 25</div>
+      </div>
+
+      <div class="left">
+        <div>
+          <div class="room" id="room">Room B144</div>
+          <h1 class="greet" id="greet">Good morning, Voyagers!</h1>
+          <p class="sub">Pick what you want on the TV.</p>
+        </div>
+        <div class="tiles">
+          <button class="tile t1" id="t1" data-label="iPad or Laptop">
+            <span class="port">HDMI 1</span><span></span>
+            <span class="name">iPad or Laptop</span>
+            <span class="what">Phones too, with a Media Room adapter</span>
+          </button>
+          <button class="tile t2" id="t2" data-label="DVD Player">
+            <span class="port">HDMI 2</span><span></span>
+            <span class="name">DVD Player</span>
+            <span class="what">Plays DVDs and Blu-ray discs</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="right">
+        <section class="glass weather" aria-label="Weather">
+          <div class="label">Franklin, TN</div>
+          <div class="now">
+            <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="24" cy="22" r="11" fill="#FFD25A"/><g stroke="#FFD25A" stroke-width="3" stroke-linecap="round"><line x1="24" y1="4" x2="24" y2="8"/><line x1="8" y1="22" x2="4" y2="22"/><line x1="12.5" y1="10.5" x2="9.5" y2="7.5"/><line x1="35.5" y1="10.5" x2="38.5" y2="7.5"/></g><path d="M20 50h28a10 10 0 0 0 0-20 14 14 0 0 0-26.5 3A8.5 8.5 0 0 0 20 50z" fill="#fff"/></svg>
+            <div>
+              <div class="temp">64°</div>
+              <div class="cond">Partly cloudy</div>
+              <div class="hilo">High 71° · Low 48°</div>
+            </div>
+          </div>
+        </section>
+        <section class="glass wifi" aria-label="Guest Wi-Fi">
+          <div class="qr" id="qr"></div>
+          <div>
+            <div class="label">Guest Wi-Fi</div>
+            <div class="ssid">FFUMC_Guest</div>
+            <div class="pass">Password <b>Guest123</b></div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="bottom">
+        <span class="remote"><span class="dpad" aria-hidden="true"></span><span>Use the arrows to pick. Press the <b>middle button</b> to choose.</span></span>
+        <span class="help" id="help">Need help? Ask in the <b>Media Room</b>.<br>Or email <b>tech@franklinfumc.org</b></span>
+      </footer>
+    </div>
+    <div class="switching" id="switching" hidden><div><span id="sw-text">Switching to iPad or Laptop</span><small>Press Back to come back here.</small></div></div>
+  </div>
+
+  <div class="preview">
+    <label for="pv-theme">Color theme
+      <select id="pv-theme">
+        <option value="navy">Navy glass</option>
+        <option value="burgundy">Burgundy glass</option>
+        <option value="evergreen">Evergreen glass</option>
+        <option value="slate">Slate glass</option>
+        <option value="autumn">Autumn (Sep–Nov)</option>
+        <option value="winter">Winter (Dec–Feb)</option>
+        <option value="spring">Spring (Mar–May)</option>
+        <option value="summer">Summer (Jun–Aug)</option>
+        <option value="auto" selected>Automatic by season</option>
+      </select>
+    </label>
+    <label for="pv-bg">Background
+      <select id="pv-bg">
+        <option value="colors">Seasonal colors</option>
+        <option value="photo1">Autumn photo 1 (mountain larches)</option>
+        <option value="photo2" selected>Autumn photo 2 (forest close-up)</option>
+      </select>
+    </label>
+    <label for="pv-blur">Photo blur
+      <select id="pv-blur">
+        <option value="0.4cqw">Light</option>
+        <option value="1.2cqw" selected>Medium</option>
+        <option value="2.4cqw">Heavy</option>
+      </select>
+    </label>
+    <label for="pv-dim">Photo darkness
+      <select id="pv-dim">
+        <option value=".65">Lighter</option>
+        <option value=".5" selected>Medium</option>
+        <option value=".35">Darker</option>
+      </select>
+    </label>
+    <label for="pv-font">Headline font
+      <select id="pv-font">
+        <option value="Inter" selected>Inter (clean, like iPhone)</option>
+        <option value="Lexend">Lexend (built for easy reading)</option>
+        <option value="Nunito">Nunito (rounded, friendly)</option>
+        <option value="Poppins">Poppins (geometric)</option>
+        <option value="Outfit">Outfit (modern geometric)</option>
+        <option value="Montserrat">Montserrat (wide, signage)</option>
+        <option value="Fraunces">Fraunces (warm serif)</option>
+      </select>
+    </label>
+    <label for="pv-weight">Thickness
+      <select id="pv-weight">
+        <option value="400">Regular</option>
+        <option value="500">Medium</option>
+        <option value="600">Semibold</option>
+        <option value="700" selected>Bold</option>
+        <option value="800">Extra bold (before)</option>
+      </select>
+    </label>
+    <label for="pv-room">Room
+      <select id="pv-room">
+        <option value="B144" selected>B144</option>
+        <option value="B132-133">B132-133</option>
+        <option value="A113">A113</option>
+        <option value="A114">A114</option>
+        <option value="A115">A115</option>
+        <option value="B138">B138</option>
+      </select>
+    </label>
+    <label for="pv-time">Time
+      <select id="pv-time">
+        <option value="now">Right now</option>
+        <option value="0,7,45" selected>Sunday 7:45 AM</option>
+        <option value="0,9,52">Sunday 9:52 AM</option>
+        <option value="0,13,15">Sunday 1:15 PM</option>
+        <option value="3,18,30">Wednesday 6:30 PM</option>
+      </select>
+    </label>
+  </div>
+  <p class="caption">Design preview. The weather shown is example data; on the TV it would be live for Franklin. Click a button, or use arrow keys and Enter like the remote.</p>
+</div>
+
+<script>
+(function () {
+  var THEMES = {
+    navy:      { base: "#04192B", o1: "#18375D", o2: "#7A2426", o3: "#1B5236", t1: "122,36,38", t2: "31,74,124" },
+    burgundy:  { base: "#1E0709", o1: "#7A2426", o2: "#18375D", o3: "#575A5D", t1: "122,36,38", t2: "31,74,124" },
+    evergreen: { base: "#031A10", o1: "#1B5236", o2: "#517540", o3: "#18375D", t1: "122,36,38", t2: "31,74,124" },
+    slate:     { base: "#16181A", o1: "#575A5D", o2: "#18375D", o3: "#7A2426", t1: "122,36,38", t2: "31,74,124" },
+    autumn:    { base: "#1A0D06", o1: "#B5541A", o2: "#7A2426", o3: "#C8892B", t1: "122,36,38", t2: "31,74,124" },
+    winter:    { base: "#0A1422", o1: "#3E6E9C", o2: "#8A97A6", o3: "#18375D", t1: "122,36,38", t2: "31,74,124" },
+    spring:    { base: "#0E1A13", o1: "#4F8A4A", o2: "#B76E8C", o3: "#5C8FB8", t1: "122,36,38", t2: "31,74,124" },
+    summer:    { base: "#05161C", o1: "#1E7A8A", o2: "#C9962B", o3: "#C2563F", t1: "122,36,38", t2: "31,74,124" }
+  };
+  var root = document.documentElement;
+  function season(d) {
+    var m = d.getMonth();
+    return m >= 8 && m <= 10 ? "autumn" : (m === 11 || m <= 1) ? "winter" : m <= 4 ? "spring" : "summer";
+  }
+  function theme(name) {
+    if (name === "auto") name = season(new Date());
+    var t = THEMES[name] || THEMES.navy;
+    root.style.setProperty("--base", t.base);
+    root.style.setProperty("--orb1", t.o1);
+    root.style.setProperty("--orb2", t.o2);
+    root.style.setProperty("--orb3", t.o3);
+    root.style.setProperty("--tint1", t.t1);
+    root.style.setProperty("--tint2", t.t2);
+  }
+
+  // Wi-Fi QR code (the same "WIFI:" text phones understand)
+  try {
+    var q = qrcode(0, "M");
+    q.addData("WIFI:T:WPA;S:FFUMC_Guest;P:Guest123;;");
+    q.make();
+    document.getElementById("qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch (e) { /* the card still shows the name and password */ }
+
+  // Sunday classes by room (from Luke's schedule)
+  var CLASSES = [
+    ["B144", 0, 8 * 60 + 30, "Voyagers"], ["B144", 0, 10 * 60, "Women in Christ"],
+    ["B132-133", 0, 600, "Common Ground"], ["A113", 0, 600, "Thirty-Somethings"],
+    ["A114", 0, 600, "Koinonia"], ["A115", 0, 600, "New Horizons"]
+  ];
+  var roomKey = "B144", fake = [0, 7, 45];
+  function now() {
+    var d = new Date();
+    if (!fake) return d;
+    d.setDate(d.getDate() + ((fake[0] - d.getDay() + 7) % 7));
+    d.setHours(fake[1], fake[2], 0, 0);
+    return d;
+  }
+  function today(d) { return CLASSES.filter(function (c) { return c[1] === d.getDay(); }); }
+  function classNow(d) {
+    var mins = d.getHours() * 60 + d.getMinutes(), all = today(d);
+    if (!all.length) return null;
+    var first = Math.min.apply(null, all.map(function (c) { return c[2]; }));
+    var here = all.filter(function (c) { return c[0] === roomKey; }).sort(function (a, b) { return a[2] - b[2]; });
+    for (var i = 0; i < here.length; i++) {
+      var s = here[i][2], from = s - (s === first ? 60 : 10);
+      var to = i + 1 < here.length ? here[i + 1][2] - 10 : s + 120;
+      if (mins >= from && mins < to) return here[i][3];
+    }
+    return null;
+  }
+  function deskOpen(d) {
+    var mins = d.getHours() * 60 + d.getMinutes(), all = today(d);
+    if (!all.length) return false;
+    var s = all.map(function (c) { return c[2]; });
+    return mins >= Math.min.apply(null, s) - 60 && mins < Math.max.apply(null, s) + 120;
+  }
+
+  var timeEl = document.getElementById("time"), dateEl = document.getElementById("date");
+  var greetEl = document.getElementById("greet"), roomEl = document.getElementById("room"), helpEl = document.getElementById("help");
+  function tick() {
+    var d = now(), h = d.getHours(), m = d.getMinutes();
+    timeEl.innerHTML = ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + '<span class="ampm">' + (h < 12 ? "AM" : "PM") + "</span>";
+    dateEl.textContent = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+    roomEl.textContent = "Room " + roomKey;
+    var part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+    var cls = classNow(d);
+    greetEl.textContent = part + (cls ? ", " + cls + "!" : ".");
+    helpEl.innerHTML = deskOpen(d)
+      ? 'Need help? Ask in the <b>Media Room</b>.<br>Or email <b>tech@franklinfumc.org</b>'
+      : 'Need help? Email <b>tech@franklinfumc.org</b>';
+  }
+  tick(); setInterval(tick, 15000);
+
+  // remote-style navigation
+  var tiles = [document.getElementById("t1"), document.getElementById("t2")], idx = 0;
+  function focusTile(i) {
+    idx = (i + tiles.length) % tiles.length;
+    tiles.forEach(function (t, j) { t.classList.toggle("is-focus", j === idx); });
+    tiles[idx].focus({ preventScroll: true });
+  }
+  focusTile(0);
+  var sw = document.getElementById("switching"), swText = document.getElementById("sw-text"), swTimer;
+  tiles.forEach(function (t, i) {
+    t.addEventListener("click", function () {
+      focusTile(i);
+      swText.textContent = "Switching to " + t.getAttribute("data-label");
+      sw.hidden = false;
+      clearTimeout(swTimer);
+      swTimer = setTimeout(function () { sw.hidden = true; focusTile(idx); }, 2000);
+    });
+    t.addEventListener("mouseenter", function () { focusTile(i); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (!sw.hidden || /SELECT/.test(document.activeElement.tagName)) return;
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { focusTile(idx + (e.key === "ArrowRight" ? 1 : -1)); e.preventDefault(); }
+  });
+
+  document.getElementById("pv-font").addEventListener("change", function (e) {
+    root.style.setProperty("--display", '"' + e.target.value + '", "Inter", system-ui, sans-serif');
+  });
+  var stageEl = document.getElementById("stage");
+  var PHOTOS = { photo1: "__PHOTO__", photo2: "__PHOTO2__" };
+  var photoEl = document.querySelector(".photo");
+  function bg(v) {
+    stageEl.classList.toggle("with-photo", v in PHOTOS);
+    if (v in PHOTOS) photoEl.style.backgroundImage = 'url("' + PHOTOS[v] + '")';
+  }
+  document.getElementById("pv-bg").addEventListener("change", function (e) { bg(e.target.value); });
+  document.getElementById("pv-blur").addEventListener("change", function (e) { root.style.setProperty("--pblur", e.target.value); });
+  document.getElementById("pv-dim").addEventListener("change", function (e) { root.style.setProperty("--pdim", e.target.value); });
+  bg("photo2");
+  document.getElementById("pv-weight").addEventListener("change", function (e) {
+    root.style.setProperty("--dw", e.target.value);
+  });
+  document.getElementById("pv-theme").addEventListener("change", function (e) { theme(e.target.value); });
+  document.getElementById("pv-room").addEventListener("change", function (e) { roomKey = e.target.value; tick(); });
+  document.getElementById("pv-time").addEventListener("change", function (e) {
+    fake = e.target.value === "now" ? null : e.target.value.split(",").map(Number); tick();
+  });
+  theme("auto");
+})();
+</script>
