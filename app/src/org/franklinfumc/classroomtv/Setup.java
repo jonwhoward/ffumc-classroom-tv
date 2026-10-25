@@ -284,7 +284,7 @@ final class Setup {
     /**
      * The class meeting in this room right now, or null. A class shows from 10 minutes before it
      * starts (an hour for the first time slot of that day) until 10 minutes before the room's next
-     * class, or two hours after it starts.
+     * class, or one hour after it starts.
      */
     String classNow(Calendar now) {
         if (room.isEmpty()) return null;
@@ -301,7 +301,7 @@ final class Setup {
         for (int i = 0; i < here.size(); i++) {
             Meeting k = here.get(i);
             int from = k.start - (k.start == firstSlot ? 60 : 10);
-            int to = i + 1 < here.size() ? here.get(i + 1).start - 10 : k.start + 120;
+            int to = i + 1 < here.size() ? here.get(i + 1).start - 10 : k.start + 60;
             if (mins >= from && mins < to) return k.name;
         }
         return null;
