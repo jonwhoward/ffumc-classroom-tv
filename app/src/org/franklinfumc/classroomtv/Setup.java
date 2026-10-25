@@ -207,16 +207,42 @@ final class Setup {
      * one starts until two hours after the last one starts, anywhere in the building.
      */
     boolean deskOpen(Calendar now) {
-        if (desk.isEmpty()) return false;
-        int day = now.get(Calendar.DAY_OF_WEEK);
+        return !desk.isEmpty() && classHours(now);
+    }
+
+    /** True on a day with classes, from an hour before the first starts until two hours after the last starts. */
+    boolean classHours(Calendar now) {
+        int[] span = span(now.get(Calendar.DAY_OF_WEEK));
         int mins = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        return span != null && mins >= span[0] && mins < span[1];
+    }
+
+    /** When the next class hours begin (epoch millis), or -1 when there are no classes at all. */
+    long nextClassHours(Calendar now) {
+        for (int d = 0; d <= 7; d++) {
+            Calendar c = (Calendar) now.clone();
+            c.add(Calendar.DAY_OF_YEAR, d);
+            int[] span = span(c.get(Calendar.DAY_OF_WEEK));
+            if (span == null) continue;
+            c.set(Calendar.HOUR_OF_DAY, 0);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
+            c.add(Calendar.MINUTE, span[0]);
+            if (c.after(now)) return c.getTimeInMillis();
+        }
+        return -1;
+    }
+
+    /** {start, end} in minutes after midnight for a weekday's class hours, or null. */
+    private int[] span(int day) {
         int first = Integer.MAX_VALUE, last = Integer.MIN_VALUE;
         for (Meeting k : classes) {
             if (k.day != day) continue;
             first = Math.min(first, k.start);
             last = Math.max(last, k.start);
         }
-        return first != Integer.MAX_VALUE && mins >= first - 60 && mins < last + 120;
+        return first == Integer.MAX_VALUE ? null : new int[] {first - 60, last + 120};
     }
 
     /** Saves a settings file handed over by install.sh. Returns true when it was stored. */

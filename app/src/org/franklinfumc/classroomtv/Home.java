@@ -6,6 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.view.WindowManager;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
@@ -48,6 +51,7 @@ import java.util.Locale;
  */
 public final class Home extends Activity {
     static final int NAVY = 0xFF04192B;
+    static final String EXTRA_WAKE = "wake";
     private static final int WHITE = 0xFFFFFFFF;
     private static final int SOFT = 0xC7FFFFFF;
     private static final int RED = 0x7A2426, BLUE = 0x1F4A7C; // rgb only; alpha added per use
@@ -91,6 +95,7 @@ public final class Home extends Activity {
         Ui.init(this);
         u = getResources().getDisplayMetrics().widthPixels / 100f;
         receive(getIntent());
+        wakeIfAsked(getIntent());
         setup.refresh(this);
         setContentView(build());
         buildTiles();
@@ -107,6 +112,7 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(clock, f);
         tick();
+        scheduleWake();
         long wait = Math.max(0, WEATHER_MS - (SystemClock.elapsedRealtime() - weatherAt));
         if (weatherAt == 0) wait = 0;
         ui.postDelayed(weatherLoop, wait);
@@ -136,7 +142,34 @@ public final class Home extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (receive(intent) && setup.refresh(this)) buildTiles();
+        wakeIfAsked(intent);
         focusFirst();
+    }
+
+    /** The Sunday-morning alarm launches this screen with EXTRA_WAKE: turn the screen on once. */
+    private void wakeIfAsked(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(EXTRA_WAKE, false)) return;
+        intent.removeExtra(EXTRA_WAKE);
+        Guard.wakeNext = false;
+        setShowWhenLocked(true);
+        setTurnScreenOn(true);
+        ui.postDelayed(() -> setTurnScreenOn(false), 15000);
+    }
+
+    /** Keeps the screen on during class hours; the rest of the week the TV sleeps as usual. */
+    private void stayAwake(boolean on) {
+        if (on) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    /** Sets an alarm for the start of the next class hours, to wake the TV to this screen. */
+    private void scheduleWake() {
+        long at = setup.nextClassHours(Calendar.getInstance());
+        AlarmManager alarms = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        PendingIntent wake = PendingIntent.getBroadcast(this, 2, new Intent(this, Wake.class),
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        alarms.cancel(wake);
+        if (at > 0) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, wake);
     }
 
     /** Stores a settings file sent by install.sh with the intent that opened this screen. */
@@ -475,6 +508,7 @@ public final class Home extends Activity {
         if (time == null) return;
         Calendar now = Calendar.getInstance();
         showSeason(now);
+        stayAwake(setup.classHours(now));
         int h = now.get(Calendar.HOUR_OF_DAY);
         String hm = new SimpleDateFormat("h:mm", Locale.US).format(now.getTime());
         SpannableStringBuilder t = new SpannableStringBuilder(hm);

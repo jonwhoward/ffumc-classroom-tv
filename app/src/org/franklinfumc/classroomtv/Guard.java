@@ -40,6 +40,8 @@ public final class Guard extends AccessibilityService {
     private static final long LAUNCH_FALLBACK_MS = 150;
 
     private static volatile boolean paused;
+    /** Set for the Sunday-morning wake-up: the next launch asks Home to turn the screen on. */
+    static volatile boolean wakeNext;
     private static Guard running;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -73,8 +75,16 @@ public final class Guard extends AccessibilityService {
         Intent i = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                 .setClass(c, Home.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        if (wakeNext) i.putExtra(Home.EXTRA_WAKE, true);
         return PendingIntent.getActivity(c, 0, i, PendingIntent.FLAG_UPDATE_CURRENT,
                 ActivityOptions.makeCustomAnimation(c, 0, 0).toBundle());
+    }
+
+    /** Brings the home screen up and asks it to turn the screen on (Sunday class hours begin). */
+    static void wake(Context c) {
+        wakeNext = true;
+        if (running != null) running.launchWhenCovered();
+        else home(c);
     }
 
     static void amazon(Context c) {
