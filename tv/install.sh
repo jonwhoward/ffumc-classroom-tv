@@ -28,11 +28,15 @@ sh_() { adb_ shell "$@" </dev/null; }
 
 "$ADB" connect "$IP:5555" >/dev/null 2>&1 || true
 echo "Connecting to the TV at $IP. If the TV asks 'Allow USB debugging?', tick Always allow and choose Allow."
-for i in $(seq 1 45); do
-  [[ $("$ADB" -s "$IP:5555" get-state 2>/dev/null || true) == device ]] && break
-  sleep 2; "$ADB" connect "$IP:5555" >/dev/null 2>&1 || true
+# Connect once and wait. Reconnecting while the TV shows its Allow prompt cancels the approval,
+# and this model reports "authorizing" for about 30 seconds after Allow is pressed.
+for i in $(seq 1 60); do
+  state=$("$ADB" -s "$IP:5555" get-state 2>&1 || true)
+  [[ $state == device ]] && break
+  if [[ $state == *"not found"* && $((i % 15)) == 0 ]]; then "$ADB" connect "$IP:5555" >/dev/null 2>&1 || true; fi
+  sleep 2
 done
-[[ $("$ADB" -s "$IP:5555" get-state 2>/dev/null || true) == device ]] || { echo "Could not reach the TV. Check it is on the same Wi-Fi and ADB debugging is on."; exit 1; }
+[[ $("$ADB" -s "$IP:5555" get-state 2>/dev/null || true) == device ]] || { echo "Could not reach the TV. Check it is on the same Wi-Fi as this Mac, ADB debugging is on (toggle it off and on), and you chose Allow on the TV."; exit 1; }
 
 set_futurity() {
   local cur
