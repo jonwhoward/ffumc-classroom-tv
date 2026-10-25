@@ -21,6 +21,7 @@ import java.util.List;
  *
  *   room=B144
  *   email=tech@franklinfumc.org
+ *   weather=35.9251,-86.8689|Franklin, TN   (where the weather card reports from)
  *   wifi=FFUMC_Guest|Guest123   (guest network shown with a QR code; leave out to hide the card)
  *   desk=Media Room        (where someone waits to help while Sunday classes meet)
  *   button=1|iPad or Laptop|Lessons, videos, slides and Zoom|#7A2426
@@ -64,6 +65,8 @@ final class Setup {
     String email = "tech@franklinfumc.org";
     String desk = "Media Room";
     String wifiName = "", wifiPass = "";
+    double lat = 35.9251, lon = -86.8689; // Franklin, TN
+    String place = "Franklin, TN";
     final List<Button> buttons = new ArrayList<>();
     final List<Meeting> classes = new ArrayList<>();
     private long stamp = -1;
@@ -91,6 +94,9 @@ final class Setup {
         desk = "Media Room";
         wifiName = "";
         wifiPass = "";
+        lat = 35.9251;
+        lon = -86.8689;
+        place = "Franklin, TN";
         buttons.clear();
         roomButtons.clear();
         classes.clear();
@@ -157,6 +163,13 @@ final class Setup {
                 case "desk":
                     desk = value;
                     break;
+                case "weather": {
+                    String[] ll = f[0].split(",");
+                    lat = Double.parseDouble(ll[0].trim());
+                    lon = Double.parseDouble(ll[1].trim());
+                    if (f.length >= 2) place = f[1].trim();
+                    break;
+                }
                 case "wifi":
                     wifiName = f[0].trim();
                     wifiPass = f.length >= 2 ? f[1].trim() : "";

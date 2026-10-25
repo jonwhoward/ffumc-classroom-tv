@@ -14,3 +14,5 @@ the room and the class meeting in it, and one big button per HDMI input.
 The Home-button takeover (`Guard.java`) and input screen (`Input.java`) come from
 [dumbtv](https://github.com/humblemuzzu/dumbtv), MIT licensed — see `LICENSE.dumbtv`.
 GitHub Actions builds the app on every push to `main` and publishes it as the `latest` release.
+
+Fonts: Inter (assets/fonts), SIL Open Font License, by Rasmus Andersson. Weather: Open-Meteo (CC BY 4.0).

@@ -79,6 +79,7 @@ public final class Input extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        Ui.init(this);
         id = getIntent().getStringExtra(EXTRA_ID);
         // The video is a layer behind this window; a transparent window lets the text over it blend
         // instead of punching black boxes into the picture.
