@@ -286,7 +286,9 @@ public final class Home extends Activity {
         TextView sub = Ui.px(this, u * 2.2f, SOFT, Ui.MEDIUM);
         sub.setText("Pick what you want on the TV.");
         left.addView(room, new LinearLayout.LayoutParams(WRAP, WRAP));
-        left.addView(greet, margins(0, 0.8f));
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(MATCH, WRAP);
+        glp.topMargin = px(0.8f);
+        left.addView(greet, glp);
         left.addView(sub, margins(0, 1f));
         row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -519,7 +521,10 @@ public final class Home extends Activity {
         date.setText(new SimpleDateFormat("EEEE, MMMM d", Locale.US).format(now.getTime()));
         String part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
         String cls = setup.classNow(now);
-        greet.setText(cls == null ? part + "." : part + ", " + cls + "!");
+        // "Good morning," on one line, the class on the next; the name never splits (non-breaking
+        // spaces) and shrinks to fit instead.
+        greet.setText(cls == null ? part + "." : part + ",\n" + cls.replace(' ', '\u00A0') + "!");
+        greet.post(this::fitGreeting);
         if (setup.deskOpen(now)) {
             SpannableStringBuilder line = new SpannableStringBuilder(bold("Need help? Ask in the ", setup.desk, "."));
             line.append("\n").append(bold("Or email ", setup.email, ""));
@@ -581,6 +586,19 @@ public final class Home extends Activity {
         cond.setText(w.text);
         hilo.setText("High " + Math.round(w.high) + "° · Low " + Math.round(w.low) + "°");
         icon.set(w.icon);
+    }
+
+    /** Shrinks the greeting (down to 56%) when a long class name would not fit on one line. */
+    private void fitGreeting() {
+        float width = greet.getWidth();
+        if (width <= 0) return;
+        Paint p = new Paint(greet.getPaint());
+        float full = u * 5f;
+        p.setTextSize(full);
+        float longest = 0;
+        for (String line : greet.getText().toString().split("\n")) longest = Math.max(longest, p.measureText(line));
+        float size = longest > width ? Math.max(u * 2.8f, full * width / longest * 0.98f) : full;
+        if (Math.abs(greet.getTextSize() - size) > 0.5f) greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size);
     }
 
     // ---------------------------------------------------------------- helpers
