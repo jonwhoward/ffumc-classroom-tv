@@ -96,6 +96,7 @@ public final class Home extends Activity {
         u = getResources().getDisplayMetrics().widthPixels / 100f;
         receive(getIntent());
         wakeIfAsked(getIntent());
+        wakeTest(getIntent());
         setup.refresh(this);
         setContentView(build());
         buildTiles();
@@ -143,7 +144,20 @@ public final class Home extends Activity {
         super.onNewIntent(intent);
         if (receive(intent) && setup.refresh(this)) buildTiles();
         wakeIfAsked(intent);
+        wakeTest(intent);
         focusFirst();
+    }
+
+    /** install.sh --wake-test: fire the Sunday wake alarm once, a set number of seconds from now. */
+    private void wakeTest(Intent intent) {
+        int secs = intent == null ? 0 : intent.getIntExtra("waketest", 0);
+        if (secs <= 0) return;
+        intent.removeExtra("waketest");
+        AlarmManager alarms = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        PendingIntent test = PendingIntent.getBroadcast(this, 3, new Intent(this, Wake.class),
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + secs * 1000L, test);
     }
 
     /** The Sunday-morning alarm launches this screen with EXTRA_WAKE: turn the screen on once. */

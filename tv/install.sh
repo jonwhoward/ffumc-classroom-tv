@@ -2,6 +2,7 @@
 # Installs the Franklin First classroom screen on one Fire TV and gives it the Home button.
 #   bash install.sh <room> <tv-ip>          e.g.  bash ~/Downloads/install.sh B138 192.168.10.125
 #   bash install.sh --undo <tv-ip>          give Home back to Amazon
+#   bash install.sh --wake-test <tv-ip>     check the TV can turn itself on (Sunday wake-up)
 # Keep ffumc-classroom-tv.apk and classroom.conf in the same folder as this script.
 # Home-button takeover adapted from dumbtv's launcher/install.sh (MIT).
 set -euo pipefail
@@ -12,8 +13,9 @@ OLD=tv.dumbtv.home
 TOOLS=$HOME/ffumc-tv/platform-tools
 ADB=$TOOLS/adb
 
-undo=0
+undo=0; waketest=0
 if [[ ${1:-} == --undo ]]; then undo=1; shift; ROOM=; IP=${1:-}
+elif [[ ${1:-} == --wake-test ]]; then undo=1; waketest=1; shift; ROOM=; IP=${1:-}
 else ROOM=${1:-}; IP=${2:-}; fi
 [[ -n $IP && ( $undo == 1 || -n $ROOM ) ]] || { echo "usage: bash install.sh <room> <tv-ip>   or   bash install.sh --undo <tv-ip>"; exit 2; }
 
@@ -62,6 +64,13 @@ set_guard() {
     sh_ settings put secure accessibility_enabled 0
   fi
 }
+
+if [[ $waketest == 1 ]]; then
+  sh_ am start -W -n $PKG/.Home --ei waketest 45 >/dev/null
+  echo "Wake test set. Now press the POWER button on the TV remote so the screen goes dark."
+  echo "Don't touch the remote. Within about a minute the TV should turn itself back on to the Franklin First screen."
+  exit 0
+fi
 
 if [[ $undo == 1 ]]; then
   sh_ am force-stop $PKG >/dev/null 2>&1 || true
