@@ -17,6 +17,9 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+
+import java.util.Calendar;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -38,6 +41,28 @@ public final class Input extends Activity {
     private static final String FAILED = "Could not open input", NO_SIGNAL = "No signal";
 
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Setup setup = new Setup();
+    private long openedAt;
+
+    /** Longest the TV stays on by itself while showing a source outside class hours. */
+    private static final long AWAKE_MS = 3 * 60 * 60 * 1000L;
+
+    /**
+     * Fire OS's idle sleep counts remote presses, not video, so an iPad lesson went dark mid-class.
+     * Keep the screen on while a source is showing: always during the room's class hours, and for up
+     * to three hours otherwise, so a cable left plugged in midweek doesn't hold the TV on for days.
+     */
+    private final Runnable awake = new Runnable() {
+        @Override
+        public void run() {
+            setup.refresh(Input.this);
+            boolean on = setup.classHours(Calendar.getInstance())
+                    || System.currentTimeMillis() - openedAt < AWAKE_MS;
+            if (on) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            ui.postDelayed(this, 60000);
+        }
+    };
     private final AudioManager.OnAudioFocusChangeListener focus = change -> { };
     private TvView view;
     private TextView name, status;
@@ -81,6 +106,7 @@ public final class Input extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Ui.init(this);
+        openedAt = System.currentTimeMillis();
         id = getIntent().getStringExtra(EXTRA_ID);
         // The video is a layer behind this window; a transparent window lets the text over it blend
         // instead of punching black boxes into the picture.
@@ -122,6 +148,8 @@ public final class Input extends Activity {
     @SuppressWarnings("deprecation") // the AudioFocusRequest replacement is Android 8+, Fire OS 6 is 7.1
     protected void onStart() {
         super.onStart();
+        ui.removeCallbacks(awake);
+        awake.run();
         showName();
         if (view == null || id == null) {
             status(FAILED);
@@ -140,6 +168,7 @@ public final class Input extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     protected void onStop() {
+        ui.removeCallbacks(awake);
         ui.removeCallbacksAndMessages(null);
         if (view != null) {
             view.reset();
